@@ -574,6 +574,14 @@
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <skip>${skipTests}</skip>
+                    <properties>
+                        <distribution>
+                            <enabled>true</enabled>
+                            <maxRemoteExecutors>10</maxRemoteExecutors>
+                            <remoteExecutionPreferred>true</remoteExecutionPreferred>
+                            <waitTimeoutInSeconds>120</waitTimeoutInSeconds>
+                        </distribution>
+                    </properties>
                 </configuration>
             </plugin>
             <plugin>

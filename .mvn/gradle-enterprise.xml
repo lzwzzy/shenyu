@@ -1,0 +1,37 @@
+<gradleEnterprise>
+    <server>
+        <url>https://ge.jiewa.tech:31378</url>
+        <allowUntrusted>true</allowUntrusted>
+        <accessKey>qr5uw5pn4okyv7fhvcmw6vayrcodpqpyxddzs2vsa5dotcrjicsq</accessKey>
+    </server>
+    <buildScan>
+        <publish>ALWAYS</publish>
+        <capture>
+            <goalInputFiles>true</goalInputFiles>
+            <buildLogging>true</buildLogging>
+            <testLogging>true</testLogging>
+        </capture>
+        <tags>
+            <tag>dubbo-test</tag>
+        </tags>
+        <backgroundBuildScanUpload>#{env['CI'] == null}</backgroundBuildScanUpload>
+    </buildScan>
+    <buildCache>
+        <local>
+            <enabled>false</enabled>
+            <storeEnabled>false</storeEnabled>
+        </local>
+        <remote>
+            <enabled>false</enabled>
+            <storeEnabled>false</storeEnabled>
+            <server>
+                <url>https://ge.jiewa.tech:31378/cache/</url>
+                <allowUntrusted>true</allowUntrusted>
+                <credentials>
+                    <username>${env.GRADLE_CACHE_USERNAME}</username>
+                    <password>${env.GRADLE_CACHE_PASSWORD}</password>
+                </credentials>
+            </server>
+        </remote>
+    </buildCache>
+</gradleEnterprise>
