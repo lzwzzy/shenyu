@@ -19,6 +19,7 @@ package org.apache.shenyu.admin.service.impl;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.shenyu.admin.aspect.annotation.Pageable;
+import org.apache.shenyu.admin.config.properties.DashboardProperties;
 import org.apache.shenyu.admin.mapper.ResourceMapper;
 import org.apache.shenyu.admin.model.dto.CreateResourceDTO;
 import org.apache.shenyu.admin.model.dto.ResourceDTO;
@@ -33,8 +34,10 @@ import org.apache.shenyu.admin.model.vo.PermissionMenuVO.MenuInfo;
 import org.apache.shenyu.admin.model.vo.ResourceVO;
 import org.apache.shenyu.admin.service.ResourceService;
 import org.apache.shenyu.admin.service.publish.ResourceEventPublisher;
+import org.apache.shenyu.admin.utils.Assert;
 import org.apache.shenyu.admin.utils.ListUtil;
 import org.apache.shenyu.admin.utils.ResourceUtil;
+import org.apache.shenyu.common.constant.AdminConstants;
 import org.apache.shenyu.common.enums.AdminResourceEnum;
 
 import java.util.List;
@@ -54,10 +57,14 @@ public class ResourceServiceImpl implements ResourceService {
     
     private final ResourceEventPublisher publisher;
     
+    private final DashboardProperties properties;
+    
     public ResourceServiceImpl(final ResourceMapper resourceMapper,
-                               final ResourceEventPublisher publisher) {
+                               final ResourceEventPublisher publisher,
+                               final DashboardProperties properties) {
         this.resourceMapper = resourceMapper;
         this.publisher = publisher;
+        this.properties = properties;
     }
     
     /**
@@ -172,7 +179,12 @@ public class ResourceServiceImpl implements ResourceService {
      */
     @Override
     public List<MenuInfo> getMenuTree() {
-        List<ResourceVO> resourceVOList = ListUtil.map(resourceMapper.selectAll(), ResourceVO::buildResourceVO);
+        // Hide super administrator special privileges
+        List<ResourceVO> resourceVOList = resourceMapper.selectAll()
+                .stream()
+                .filter(r -> !properties.getOnlySuperAdminPermission().contains(r.getPerms()))
+                .map(ResourceVO::buildResourceVO)
+                .collect(Collectors.toList());
         return CollectionUtils.isEmpty(resourceVOList) ? null : ResourceUtil.buildMenu(resourceVOList);
     }
     
@@ -199,6 +211,7 @@ public class ResourceServiceImpl implements ResourceService {
      */
     @EventListener(value = PluginCreatedEvent.class)
     public void onPluginCreated(final PluginCreatedEvent event) {
+        Assert.isNull(resourceMapper.nameExisted(event.getPlugin().getName()), AdminConstants.RESOURCE_NAME_IS_EXIST);
         ResourceDO resourceDO = ResourceUtil.buildPluginResource(event.getPlugin().getName());
         this.createOne(resourceDO);
         insertResourceBatch(ResourceUtil.buildPluginDataPermissionResource(resourceDO.getId(), event.getPlugin().getName()));
